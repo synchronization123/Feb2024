@@ -1,0 +1,21 @@
+Input,Validate and sanitize user inputs
+Output,Use output encoding to prevent XSS attacks
+Authentication,Implement strong user authentication mechanisms
+Authorization,Enforce proper access controls
+Session,Employ secure session management techniques
+Password,Hash and salt user passwords securely
+Uploads,Validate and sanitize file uploads
+token,Use anti-CSRF tokens
+sharing,Implement proper Cross-Origin Resource Sharing
+Headers,Utilize security headers
+SQL,Use parameterized queries
+HTTPS,Ensure secure communication with HTTPS
+Error,Implement custom error pages
+Log,Log and monitor for security incidents and Ensure logs are tamper-proof
+Encryption,Encrypt sensitive data
+API,Secure APIs with proper authentication and Implement rate-limiting mechanisms
+access,Use access controls to prevent Insecure Direct Object References
+Obfuscation,Obfuscate sensitive parts of the code
+Privilege,Follow the principle of least privilege
+Redundancy,Implement redundancy and failover
+Cryptographic,Use strong cryptography
