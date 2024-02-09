@@ -1,0 +1,61 @@
+Here's a PHP program that meets your requirements:
+
+```php
+<?php
+if(isset($_POST['submit'])) {
+    // Retrieve user input for start date and end date
+    $start_date = $_POST['start_date'];
+    $end_date = $_POST['end_date'];
+    
+    // Constructing JQL query
+    $jql_query = "status changed from 'Ready for testing' to 'Done' during(\"$start_date\", \"$end_date\")";
+
+    // Constructing JIRA API URL
+    $jira_url = "https://jira.demo.abcd.com/rest/api/2/search?jql=" . urlencode($jql_query);
+
+    // Setting up cURL request
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $jira_url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+        'Content-Type: application/json',
+        'Authorization: Bearer YOUR_API_KEY' // Replace YOUR_API_KEY with your actual API key
+    ));
+
+    // Executing the cURL request
+    $response = curl_exec($ch);
+    curl_close($ch);
+
+    // Decoding JSON response
+    $data = json_decode($response, true);
+
+    // Displaying data in a table
+    if(isset($data['issues'])) {
+        echo "<table border='1'>";
+        echo "<tr><th>Issue Key</th><th>Status</th><th>Summary</th><th>Project</th><th>Custom Field</th></tr>";
+        foreach ($data['issues'] as $issue) {
+            $issueKey = $issue['key'];
+            $status = $issue['fields']['status']['name'];
+            $summary = $issue['fields']['summary'];
+            $project = $issue['fields']['project']['name'];
+            $customField = $issue['fields']['customfield_12601']; // Assuming custom field ID is 12601
+
+            echo "<tr><td>$issueKey</td><td>$status</td><td>$summary</td><td>$project</td><td>$customField</td></tr>";
+        }
+        echo "</table>";
+    } else {
+        echo "No issues found.";
+    }
+}
+?>
+
+<form method="post">
+    <label for="start_date">Start Date:</label>
+    <input type="date" id="start_date" name="start_date" required><br><br>
+    <label for="end_date">End Date:</label>
+    <input type="date" id="end_date" name="end_date" required><br><br>
+    <input type="submit" name="submit" value="Filter">
+</form>
+```
+
+Replace `'YOUR_API_KEY'` with your actual JIRA API key. Also, ensure that the custom field ID `12601` is correct for the `cf[12601]` field you want to display. This program uses cURL to send a request to the JIRA API, retrieves the JSON response, and then displays the relevant data in a table.
