@@ -1,0 +1,190 @@
+<?php
+// API endpoint
+$url = 'https://demo.defectdojo.org/api/v2/tests/?test_type=84&limit=800000';
+
+// Pagination
+$limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$offset = ($page - 1) * $limit;
+
+// Check if form is submitted
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Get the selected start and end dates from the user
+    $start_date = $_POST['start_date']; // Assuming this comes from a form submission
+    $end_date = $_POST['end_date'];     // Assuming this comes from a form submission
+
+    // Set up cURL
+    $ch = curl_init($url);
+    $headers = array(
+        'Authorization: Token 548afd6fab3bea9794a41b31da0e9404f733e222',
+        'Content-Type: application/json'
+    );
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+    // Execute the cURL request
+    $response = curl_exec($ch);
+    $http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+    // Check for errors
+    if ($response === false || $http_status != 200) {
+        echo 'Error fetching data: ' . curl_error($ch);
+        exit;
+    }
+
+    // Close cURL
+    curl_close($ch);
+
+    // Decode JSON response
+    $data = json_decode($response, true);
+
+    // Check if data is empty
+    if (empty($data['results'])) {
+        echo 'No data found.';
+        exit;
+    }
+
+    // Filter data based on the selected date range
+    $filtered_data = array_filter($data['results'], function($test) use ($start_date, $end_date) {
+        $created = date('Y-m-d', strtotime($test['created']));
+        return $created >= $start_date && $created <= $end_date;
+    });
+
+    // Pagination
+    $filtered_data = array_slice($filtered_data, $offset, $limit);
+} else {
+    // If form is not submitted, set default dates
+    $start_date = date('Y-m-d'); // Today's date
+    $end_date = date('Y-m-d');   // Today's date
+
+    // Pagination
+    $filtered_data = array();    // Empty array
+}
+
+// Grouping Scan Types
+$scan_types = array_count_values(array_column($filtered_data, 'scan_type'));
+$scan_types_output = '';
+if (!empty($scan_types)) {
+    foreach ($scan_types as $scan_type => $count) {
+        $scan_types_output .= "<li>$scan_type: $count</li>";
+    }
+} else {
+    $scan_types_output = "<li>No Scan Type selected: " . count($filtered_data) . "</li>";
+}
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Data</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        #dataTable th,
+        #dataTable td {
+            max-width: 200px;
+            white-space: normal;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container mt-5">
+        <form method="POST" action="<?php echo $_SERVER['PHP_SELF']; ?>">
+            <div class="form-group">
+                <label for="start_date">Start Date:</label>
+                <input type="date" class="form-control" id="start_date" name="start_date" value="<?php echo $start_date; ?>">
+            </div>
+            <div class="form-group">
+                <label for="end_date">End Date:</label>
+                <input type="date" class="form-control" id="end_date" name="end_date" value="<?php echo $end_date; ?>">
+            </div>
+            <button type="submit" class="btn btn-primary">Filter</button>
+        </form>
+        <br>
+
+        <?php 
+        // Count of total data result
+        $total_tests = count($filtered_data);
+        echo "<p>Total Data Results: $total_tests</p>";
+
+        // Displaying Scan Types
+        echo "<p>Scan Types by Group Count:</p>";
+        echo "<ul>";
+        echo $scan_types_output;
+        echo "</ul>";
+        ?>
+
+        <!-- Pagination -->
+        <div class="form-group">
+            <label for="limit">Items per page:</label>
+            <select class="form-control" id="limit" onchange="location = this.value;">
+                <option value="?limit=5" <?php if($limit == 5) echo "selected"; ?>>5</option>
+                <option value="?limit=10" <?php if($limit == 10) echo "selected"; ?>>10</option>
+                <option value="?limit=15" <?php if($limit == 15) echo "selected"; ?>>15</option>
+                <option value="?limit=20" <?php if($limit == 20) echo "selected"; ?>>20</option>
+                <option value="?limit=all" <?php if($limit == 'all') echo "selected"; ?>>All</option>
+            </select>
+        </div>
+
+        <!-- Table -->
+        <table class="table table-bordered" id="dataTable">
+            <thead class="thead-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Test Type</th>
+                    <th>Scan Type</th>
+                    <th>Target Start</th>
+                    <th>Target End</th>
+                    <th>Percent Complete</th>
+                    <th>Updated</th>
+                    <th>Created</th>
+                    <th>Engagement</th>
+                    <th>Environment</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($filtered_data as $test) : ?>
+                    <tr>
+                        <td><?= $test['id'] ?></td>
+                        <td><?= $test['test_type_name'] ?></td>
+                        <td><?= $test['scan_type'] ?></td>
+                        <td><?= date('Y-m-d', strtotime($test['target_start'])) ?></td>
+                        <td><?= date('Y-m-d', strtotime($test['target_end'])) ?></td>
+                        <td><?= $test['percent_complete'] ?></td>
+                        <td><?= date('Y-m-d', strtotime($test['updated'])) ?></td>
+                        <td><?= date('Y-m-d', strtotime($test['created'])) ?></td>
+                        <td><?= $test['engagement'] ?></td>
+                        <td><?= $test['environment'] ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+
+        <!-- Pagination links -->
+        <?php if($total_tests > $limit): ?>
+        <nav aria-label="Pagination">
+            <ul class="pagination justify-content-center">
+                <?php
+                $total_pages = ceil($total_tests / $limit);
+                for($i = 1; $i <= $total_pages; $i++): ?>
+                <li class="page-item <?php if($i == $page) echo 'active'; ?>">
+                    <a class="page-link" href="?page=<?= $i ?>&limit=<?= $limit ?>"><?= $i ?></a>
+                </li>
+                <?php endfor; ?>
+            </ul>
+        </nav>
+        <?php endif; ?>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+
+</html>
