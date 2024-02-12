@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Trend Line</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+</head>
+<body>
+   
+
+    <?php
+    // API URL and key
+    $apiUrl = "https://demo.defectdojo.org/api/v2/tests/?limit=800000";
+    $apiKey = "548afd6fab3bea9794a41b31da0e9404f733e222";
+
+    // Fetch data from the API
+    $startDate = isset($_GET['start']) ? date('Y-m-d', strtotime($_GET['start'])) : date('Y-m-d', strtotime('-1 year'));
+    $endDate = isset($_GET['end']) ? date('Y-m-d', strtotime($_GET['end'])) : date('Y-m-d');
+
+    $url = $apiUrl . "?created__gte=" . urlencode($startDate) . "&created__lte=" . urlencode($endDate);
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+        'Authorization: Token ' . $apiKey,
+    ));
+    $response = curl_exec($ch);
+    curl_close($ch);
+
+    // Decode JSON response
+    $data = json_decode($response, true);
+
+    // Initialize array to store test counts for each date
+    $testCounts = [];
+
+    // Iterate through each test
+    foreach ($data['results'] as $test) {
+        // Extract creation date
+        $createdDate = date("Y-m-d", strtotime($test['created']));
+
+        // Increment test count for the creation date
+        if (isset($testCounts[$createdDate])) {
+            $testCounts[$createdDate]++;
+        } else {
+            $testCounts[$createdDate] = 1;
+        }
+    }
+
+    // Sort dates in ascending order
+    ksort($testCounts);
+
+    // Prepare data for Chart.js
+    $dates = [];
+    $counts = [];
+    foreach ($testCounts as $date => $count) {
+        $dates[] = $date;
+        $counts[] = $count;
+    }
+    ?>
+
+    <canvas id="testChart" width="200" height="50"></canvas>
+
+    <script>
+        var ctx = document.getElementById('testChart').getContext('2d');
+        var myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: <?php echo json_encode($dates); ?>,
+                datasets: [{
+                    label: 'Test Count',
+                    data: <?php echo json_encode($counts); ?>,
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1,
+                    pointBackgroundColor: 'rgba(54, 162, 235, 1)',
+                    pointRadius: 5,
+                    pointHoverRadius: 5
+                }]
+            },
+            options: {
+                scales: {
+                    xAxes: [{
+                        type: 'time',
+                        time: {
+                            unit: 'day'
+                        }
+                    }],
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: true
+                        }
+                    }]
+                },
+                plugins: {
+                    datalabels: {
+                        align: 'top',
+                        backgroundColor: function(context) {
+                            return context.dataset.backgroundColor;
+                        },
+                        borderRadius: 4,
+                        color: 'white',
+                        font: {
+                            weight: 'bold'
+                        },
+                        formatter: function(value, context) {
+                            var date = context.dataset.data[context.dataIndex].x;
+                            return value.y + " tests (" + date + ")";
+                        },
+                        offset: 8,
+                        padding: 4,
+                        textAlign: 'center'
+                    }
+                },
+                elements: {
+                    line: {
+                        backgroundColor: 'black',
+                        borderWidth: 3,
+                        fill: false
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
