@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Data Filter</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Test Data Filter</h2>
+        <form method="post">
+            <div class="form-group">
+                <label for="start_date">Start Date:</label>
+                <input type="date" class="form-control" id="start_date" name="start_date" required>
+            </div>
+            <div class="form-group">
+                <label for="end_date">End Date:</label>
+                <input type="date" class="form-control" id="end_date" name="end_date" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Filter</button>
+        </form>
+
+        <table class="table mt-5">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Title</th>
+                    <th>Created Date</th>
+                    <th>Time Taken</th>
+                    <th>Status</th>
+                    <th>Engagement</th>
+                    <th>Lead</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php
+                if ($_SERVER["REQUEST_METHOD"] == "POST") {
+                    // User input
+                    $start_date = $_POST["start_date"];
+                    $end_date = $_POST["end_date"];
+
+                    // API endpoint for test data
+                    $api_url = "https://demo.defectdojo.org/api/v2/tests/?limit=800000";
+
+                    // Headers
+                    $headers = array(
+                        "Authorization: Token 548afd6fab3bea9794a41b31da0e9404f733e222",
+                        "Content-Type: application/json"
+                    );
+
+                    // cURL options for fetching test data
+                    $options = array(
+                        CURLOPT_URL => $api_url,
+                        CURLOPT_RETURNTRANSFER => true,
+                        CURLOPT_HTTPHEADER => $headers
+                    );
+
+                    // Initialize cURL session for fetching test data
+                    $curl = curl_init();
+                    curl_setopt_array($curl, $options);
+                    $response = curl_exec($curl);
+					  // Check if response is empty or there is an error
+    if ($response === false) {
+        echo "Error fetching data: " . curl_error($curl);
+    }
+                  
+
+                    // Decode JSON response
+                    $test_data = json_decode($response, true);
+
+                    // Display filtered data
+                    foreach ($test_data["results"] as $item) {
+                        $created_date = date("Y-m-d", strtotime($item["created"]));
+                        if ($created_date >= $start_date && $created_date <= $end_date) {
+                            // Fetch engagement data
+                            $engagement_id = $item["engagement"];
+                            $engagement_url = "https://demo.defectdojo.org/api/v2/engagements/{$engagement_id}/";
+                            $curl = curl_init();
+                            curl_setopt_array($curl, array(
+                                CURLOPT_URL => $engagement_url,
+                                CURLOPT_RETURNTRANSFER => true,
+                                CURLOPT_HTTPHEADER => $headers
+                            ));
+                            $engagement_response = curl_exec($curl);
+                            curl_close($curl);
+                            $engagement_data = json_decode($engagement_response, true);
+
+                            // Fetch lead data
+                            $lead_id = $item["lead"];
+                            $lead_url = "https://demo.defectdojo.org/api/v2/users/{$lead_id}/";
+                            $curl = curl_init();
+                            curl_setopt_array($curl, array(
+                                CURLOPT_URL => $lead_url,
+                                CURLOPT_RETURNTRANSFER => true,
+                                CURLOPT_HTTPHEADER => $headers
+                            ));
+                            $lead_response = curl_exec($curl);
+                            curl_close($curl);
+                            $lead_data = json_decode($lead_response, true);
+
+                            // Display table row
+                            echo "<tr>";
+                            echo "<td><a href='https://demo.defectdojo.org/test/{$item["id"]}' target='_blank'>{$item["id"]}</a></td>";
+                            echo "<td>{$item["title"]}</td>";
+                            echo "<td>{$created_date}</td>";
+                            echo "<td>{$item["commit_hash"]}</td>";
+                            echo "<td>{$item["branch_tag"]}</td>";
+                            echo "<td>{$engagement_data["name"]}</td>";
+                           echo "<td>{$lead_data["username"]}</td>";
+                            echo "</tr>";
+                        }
+                    }
+                }
+                ?>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
