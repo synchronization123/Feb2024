@@ -1,0 +1,181 @@
+Here's the full code including the HTML, PHP, and JavaScript parts with the auto-saving feature after dragging a name to a new location:
+
+```php
+<?php
+
+// Function to load data from JSON file
+function load_data() {
+    $file = 'data.json';
+    $data = file_get_contents($file);
+    return json_decode($data, true);
+}
+
+// Function to save data to JSON file
+function save_data($data) {
+    $file = 'data.json';
+    $json_data = json_encode($data, JSON_PRETTY_PRINT);
+    file_put_contents($file, $json_data);
+}
+
+// Load data
+$data = load_data();
+
+// Handle form submission
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Check if the form was submitted for adding a name
+    if (isset($_POST['add_name'])) {
+        $list = $_POST['list'];
+        $name = $_POST['name'];
+        // Check if the list has less than 50 names
+        if (count($data[$list]) < 50) {
+            // Add name to the specified list
+            $data[$list][] = $name;
+            // Save data
+            save_data($data);
+        } else {
+            echo "<script>alert('Maximum 50 names allowed under each list.')</script>";
+        }
+    }
+    // Check if the form was submitted for adding a new list
+    elseif (isset($_POST['add_list'])) {
+        $new_list_name = $_POST['new_list_name'];
+        $position = $_POST['position'];
+        // Check if the new list name is not empty
+        if (!empty($new_list_name)) {
+            // Add new list to the specified position
+            if ($position == 'start') {
+                $data = array_merge(array($new_list_name => array()), $data);
+            } else {
+                $data[$new_list_name] = array();
+            }
+            // Save data
+            save_data($data);
+        } else {
+            echo "<script>alert('Please enter a valid list name.')</script>";
+        }
+    }
+}
+
+?>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Drag and Drop Lists</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    <style>
+        .list {
+            float: left;
+            margin-right: 20px;
+        }
+        .list h3 {
+            margin: 0;
+        }
+        .list ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            border: 1px solid #ccc;
+            min-height: 100px;
+        }
+        .list li {
+            background-color: #f9f9f9;
+            border: 1px solid #ccc;
+            margin-bottom: 5px;
+            padding: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div class="list" id="list_A">
+    <h3>List A</h3>
+    <ul class="sortable" data-list="List A">
+        <?php foreach ($data['List A'] as $name): ?>
+            <li><?php echo $name; ?></li>
+        <?php endforeach; ?>
+    </ul>
+</div>
+
+<div class="list" id="list_B">
+    <h3>List B</h3>
+    <ul class="sortable" data-list="List B">
+        <?php foreach ($data['List B'] as $name): ?>
+            <li><?php echo $name; ?></li>
+        <?php endforeach; ?>
+    </ul>
+</div>
+
+<div class="list" id="list_C">
+    <h3>List C</h3>
+    <ul class="sortable" data-list="List C">
+        <?php foreach ($data['List C'] as $name): ?>
+            <li><?php echo $name; ?></li>
+        <?php endforeach; ?>
+    </ul>
+</div>
+
+<div class="list" id="list_D">
+    <h3>List D</h3>
+    <ul class="sortable" data-list="List D">
+        <?php foreach ($data['List D'] as $name): ?>
+            <li><?php echo $name; ?></li>
+        <?php endforeach; ?>
+    </ul>
+</div>
+
+<form method="post">
+    <label for="name">Name:</label>
+    <input type="text" id="name" name="name" required>
+    <select name="list">
+        <option value="List A">List A</option>
+        <option value="List B">List B</option>
+        <option value="List C">List C</option>
+        <option value="List D">List D</option>
+    </select>
+    <input type="submit" name="add_name" value="Add Name">
+</form>
+
+<form method="post">
+    <label for="new_list_name">New List Name:</label>
+    <input type="text" id="new_list_name" name="new_list_name" required>
+    <select name="position">
+        <option value="start">Add at Start</option>
+        <option value="end">Add at End</option>
+    </select>
+    <input type="submit" name="add_list" value="Add List">
+</form>
+
+<script>
+    $(document).ready(function () {
+        $(".sortable").sortable({
+            connectWith: ".sortable",
+            update: function (event, ui) {
+                saveData();
+            }
+        });
+
+        function saveData() {
+            var data = {};
+            $(".sortable").each(function () {
+                var list_id = $(this).data("list");
+                var names = [];
+                $(this).find("li").each(function () {
+                    names.push($(this).text());
+                });
+                data[list_id] = names;
+            });
+            $.post("save.php", {data: JSON.stringify(data)}, function (response) {
+                alert(response);
+            });
+        }
+    });
+</script>
+
+</body>
+</html>
+```
+
+With this code, the data is automatically saved to the JSON file every time a name is dragged and dropped into a new location without requiring the user to manually click a "Save" button.
