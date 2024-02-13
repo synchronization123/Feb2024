@@ -1,0 +1,12 @@
+Here's an example of how the `data.json` file might look based on the provided code:
+
+```json
+{
+  "List A": ["John", "Alice", "Bob"],
+  "List B": ["Emma", "David"],
+  "List C": ["Sophia", "Michael", "Olivia"],
+  "List D": ["James"]
+}
+```
+
+This JSON file contains four lists (List A, List B, List C, List D), each with a few names. You can update this file according to the names added or moved in your PHP program.
