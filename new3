@@ -1,0 +1,128 @@
+Certainly! I'll integrate Bootstrap to enhance the appearance of the interface. Here's the updated `index.php` file with Bootstrap styling:
+
+```php
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drag and Drop Lists</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- jQuery UI -->
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    <style>
+        .list {
+            margin-bottom: 20px;
+        }
+        .list ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            border: 1px solid #ccc;
+            min-height: 100px;
+        }
+        .list li {
+            background-color: #f9f9f9;
+            border: 1px solid #ccc;
+            margin-bottom: 5px;
+            padding: 10px;
+            cursor: pointer;
+        }
+        .edit-btn {
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container mt-5">
+    <div class="row">
+        <?php foreach ($data as $list_id => $list_items): ?>
+        <div class="col-lg-3 list" id="<?php echo $list_id; ?>">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title"><?php echo $list_id; ?></h5>
+                    <ul class="sortable" data-list="<?php echo $list_id; ?>">
+                        <?php foreach ($list_items as $index => $name): ?>
+                        <li><?php echo $name; ?></li>
+                        <?php endforeach; ?>
+                    </ul>
+                    <button class="btn btn-primary edit-list edit-btn" data-toggle="modal" data-target="#editListModal" data-list="<?php echo $list_id; ?>">Edit List</button>
+                </div>
+            </div>
+        </div>
+        <?php endforeach; ?>
+    </div>
+</div>
+
+<!-- Edit List Modal -->
+<div class="modal fade" id="editListModal" tabindex="-1" role="dialog" aria-labelledby="editListModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editListModalLabel">Edit List Name</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="editListForm" method="post">
+                <div class="modal-body">
+                    <input type="hidden" id="editListId" name="list_id">
+                    <div class="form-group">
+                        <label for="editListName">New List Name:</label>
+                        <input type="text" class="form-control" id="editListName" name="new_list_name" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary" name="edit_list">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        $(".sortable").sortable({
+            connectWith: ".sortable",
+            update: function (event, ui) {
+                saveData();
+            }
+        });
+
+        $(".edit-list").click(function () {
+            var listId = $(this).data("list");
+            $("#editListId").val(listId);
+            $("#editListName").val(listId);
+        });
+
+        // Function to save data
+        function saveData() {
+            var data = {};
+            $(".sortable").each(function () {
+                var list_id = $(this).data("list");
+                var names = [];
+                $(this).find("li").each(function () {
+                    names.push($(this).text());
+                });
+                data[list_id] = names;
+            });
+            $.post("save.php", {data: JSON.stringify(data)}, function (response) {
+                console.log(response);
+            });
+        }
+    });
+</script>
+
+</body>
+</html>
+```
+
+In this version, I've used Bootstrap's grid system to organize the lists into columns, and I've styled the cards to contain each list. The "Edit List" button now triggers a Bootstrap modal for editing list names.
