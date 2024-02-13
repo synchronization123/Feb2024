@@ -1,0 +1,208 @@
+Apologies for the oversight. Let's ensure that `$data` is properly initialized before being used in the loop. Here's the corrected version:
+
+```php
+<?php
+
+// Function to load data from JSON file
+function load_data() {
+    $file = 'data.json';
+    $data = file_get_contents($file);
+    return json_decode($data, true);
+}
+
+// Function to save data to JSON file
+function save_data($data) {
+    $file = 'data.json';
+    $json_data = json_encode($data, JSON_PRETTY_PRINT);
+    file_put_contents($file, $json_data);
+}
+
+// Load data
+$data = load_data();
+if (!$data) {
+    // Initialize with empty arrays if data file is empty or doesn't exist
+    $data = [
+        'List A' => [],
+        'List B' => [],
+        'List C' => [],
+        'List D' => []
+    ];
+}
+
+// Handle form submission
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Check if the form was submitted for adding or editing a name
+    if (isset($_POST['add_name'])) {
+        $list = $_POST['list'];
+        $name = $_POST['name'];
+        // Check if the list has less than 50 names
+        if (count($data[$list]) < 50) {
+            // Add name to the specified list
+            $data[$list][] = $name;
+            // Save data
+            save_data($data);
+        } else {
+            echo "<script>alert('Maximum 50 names allowed under each list.')</script>";
+        }
+    } elseif (isset($_POST['edit_name'])) {
+        $list = $_POST['list'];
+        $index = $_POST['index'];
+        $new_name = $_POST['new_name'];
+        // Update the name in the specified list
+        $data[$list][$index] = $new_name;
+        // Save data
+        save_data($data);
+    }
+    // Check if the form was submitted for adding or editing a list name
+    elseif (isset($_POST['add_list']) || isset($_POST['edit_list'])) {
+        $list_id = $_POST['list_id'];
+        $new_list_name = $_POST['new_list_name'];
+        // Check if the new list name is not empty
+        if (!empty($new_list_name)) {
+            // Add or edit list name
+            $data[$new_list_name] = $data[$list_id];
+            unset($data[$list_id]);
+            // Save data
+            save_data($data);
+        } else {
+            echo "<script>alert('Please enter a valid list name.')</script>";
+        }
+    }
+}
+
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drag and Drop Lists</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- jQuery UI -->
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    <style>
+        .list {
+            margin-bottom: 20px;
+        }
+        .list ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            border: 1px solid #ccc;
+            min-height: 100px;
+        }
+        .list li {
+            background-color: #f9f9f9;
+            border: 1px solid #ccc;
+            margin-bottom: 5px;
+            padding: 10px;
+            cursor: pointer;
+        }
+        .edit-btn {
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container mt-5">
+    <div class="row">
+        <?php foreach ($data as $list_id => $list_items): ?>
+        <div class="col-lg-3 list" id="<?php echo $list_id; ?>">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title"><?php echo $list_id; ?></h5>
+                    <ul class="sortable" data-list="<?php echo $list_id; ?>">
+                        <?php foreach ($list_items as $index => $name): ?>
+                        <li><?php echo $name; ?></li>
+                        <?php endforeach; ?>
+                    </ul>
+                    <button class="btn btn-primary edit-list edit-btn" data-toggle="modal" data-target="#editListModal" data-list="<?php echo $list_id; ?>">Edit List</button>
+                </div>
+            </div>
+        </div>
+        <?php endforeach; ?>
+        <div class="col-lg-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Add New List</h5>
+                    <form method="post">
+                        <div class="form-group">
+                            <input type="text" class="form-control" id="newListName" name="new_list_name" placeholder="Enter List Name" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary" name="add_list">Add List</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit List Modal -->
+<div class="modal fade" id="editListModal" tabindex="-1" role="dialog" aria-labelledby="editListModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editListModalLabel">Edit List Name</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="editListForm" method="post">
+                <div class="modal-body">
+                    <input type="hidden" id="editListId" name="list_id">
+                    <div class="form-group">
+                        <label for="editListName">New List Name:</label>
+                        <input type="text" class="form-control" id="editListName" name="new_list_name" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary" name="edit_list">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        $(".sortable").sortable({
+            connectWith: ".sortable",
+            update: function (event, ui) {
+                saveData();
+            }
+        });
+
+        //
+```php
+        // Function to save data
+        function saveData() {
+            var data = {};
+            $(".sortable").each(function () {
+                var list_id = $(this).data("list");
+                var names = [];
+                $(this).find("li").each(function () {
+                    names.push($(this).text());
+                });
+                data[list_id] = names;
+            });
+            $.post("save.php", {data: JSON.stringify(data)}, function (response) {
+                console.log(response);
+            });
+        }
+    });
+</script>
+
+</body>
+</html>
+```
+
+This ensures that `$data` is properly initialized before being used and should resolve the error. Let me know if you need further assistance!
