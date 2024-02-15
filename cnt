@@ -1,0 +1,47 @@
+To integrate the API endpoint `shdhhd.sjsjd.com/api/v2/tests/` with the provided parameters `test_type=147` and `limit=80000`, you can use PHP's cURL library to make the HTTP request. Here's how you can do it:
+
+```php
+<?php
+// API endpoint
+$apiEndpoint = 'https://shdhhd.sjsjd.com/api/v2/tests/?test_type=147&limit=80000';
+$apiKey = 'jsjsjjsns';
+
+// Initialize cURL session
+$curl = curl_init();
+
+// Set cURL options
+curl_setopt_array($curl, [
+    CURLOPT_URL => $apiEndpoint,
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_HTTPHEADER => [
+        'Authorization: Bearer ' . $apiKey,
+    ],
+]);
+
+// Execute cURL request
+$response = curl_exec($curl);
+
+// Check for errors
+if(curl_errno($curl)) {
+    echo 'Error: ' . curl_error($curl);
+} else {
+    // Decode JSON response
+    $data = json_decode($response, true);
+
+    // Handle response data
+    if(isset($data['results'])) {
+        foreach($data['results'] as $result) {
+            // Process each result
+            // Example: echo $result['id'];
+        }
+    } else {
+        echo 'No results found.';
+    }
+}
+
+// Close cURL session
+curl_close($curl);
+?>
+```
+
+Replace `'jsjsjjsns'` with your actual API key. This script sends a GET request to the specified API endpoint with the provided parameters and retrieves the response. Make sure to handle errors and response data according to your application's requirements.
