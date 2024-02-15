@@ -1,0 +1,28 @@
+If you want to filter the values based on a start date and an end date, you can modify the API call to include these parameters. Here's how you can adjust the code:
+
+```php
+<?php
+// Assuming you have an API endpoint to interact with your database
+$apiEndpoint = 'https://your-api-endpoint.com/';
+$apiKey = 'your-api-key';
+
+// Assuming you have the start_date and end_date from your program
+$startDate = $_GET['start_date']; // Assuming you're passing the start_date via GET parameter
+$endDate = $_GET['end_date']; // Assuming you're passing the end_date via GET parameter
+
+// Make an API call to fetch the counts for each value in the branch_tag column based on the filtered dates
+$valuesResponse = file_get_contents($apiEndpoint . 'count_values.php?start_date=' . urlencode($startDate) . '&end_date=' . urlencode($endDate) . '&api_key=' . urlencode($apiKey));
+$values = json_decode($valuesResponse, true);
+
+if ($values) {
+    echo "Counts for values in branch_tag column between $startDate and $endDate:\n";
+    foreach ($values as $row) {
+        echo $row['branch_tag'] . ": " . $row['count'] . "\n";
+    }
+} else {
+    echo "Error fetching values.\n";
+}
+?>
+```
+
+In this code, the `count_values.php` script on your server should now handle filtering based on the provided start date and end date parameters. Make sure your API endpoint script properly handles these parameters and filters the data accordingly.
