@@ -1,0 +1,40 @@
+<!-- index.php -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Cases</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Test Cases</h1>
+    <form method="GET">
+      <label for="start_date">Start Date:</label>
+      <input type="date" id="start_date" name="start_date">
+      <label for="end_date">End Date:</label>
+      <input type="date" id="end_date" name="end_date">
+      <button type="submit" class="btn btn-primary">Filter</button>
+    </form>
+    <br>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Test Case ID</th>
+          <th>eManager IR</th>
+          <th>Created Date</th>
+          <th>Time taken</th>
+          <th>Patch Status</th>
+          <th>Patch Title</th>
+          <th>Assigned to</th>
+        </tr>
+      </thead>
+      <tbody>
+        <?php include 'config.php'; ?>
+        <?php include 'fetch_data.php'; ?>
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>
