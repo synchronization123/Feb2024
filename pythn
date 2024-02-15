@@ -1,0 +1,49 @@
+Below is a Python script that reads data from a CSV file and uses the DefectDojo API to create engagements:
+
+```python
+import requests
+import csv
+
+def create_engagement(api_url, token, name, target_start, target_end, lead, product, status):
+    headers = {
+        'Authorization': f'Token {token}',
+        'Content-Type': 'application/json'
+    }
+    data = {
+        "name": name,
+        "target_start": target_start,
+        "target_end": target_end,
+        "lead": lead,
+        "product": product,
+        "status": status
+    }
+    response = requests.post(api_url + '/engagements/', json=data, headers=headers)
+    if response.status_code == 201:
+        print(f"Engagement '{name}' created successfully.")
+    else:
+        print(f"Failed to create engagement '{name}'. Status code: {response.status_code}")
+
+def main():
+    api_url = "https://hdhdjjd.djjd.com/api/v2"
+    token = "jdjdjdjdjjdjd"
+    csv_file = "createengagements.csv"
+
+    with open(csv_file, newline='') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            create_engagement(
+                api_url,
+                token,
+                row['Name'],
+                row['Target_start'],
+                row['Target_end'],
+                row['Lead'],
+                row['Product'],
+                row['Status']
+            )
+
+if __name__ == "__main__":
+    main()
+```
+
+Make sure to replace `"https://hdhdjjd.djjd.com/api/v2"` with your actual API URL and `"jdjdjdjdjjdjd"` with your authorization token. Also, ensure that the CSV file (`createengagements.csv`) is in the same directory as the script and has the columns `Name`, `Target_start`, `Target_end`, `Lead`, `Product`, and `Status`.
