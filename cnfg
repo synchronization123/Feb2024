@@ -1,0 +1,7 @@
+<!-- config.php -->
+<?php
+define('TEST_CASE_API_URL', '/api/v2/tests/?test_type=147');
+define('ENGAGEMENT_API_URL', '/api/v2/engagements');
+define('BASE_URL', 'https://shbshd.sjns.com');
+define('API_KEY', 'djdjnsjsjjsj');
+?>
