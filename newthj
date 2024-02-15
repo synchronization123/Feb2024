@@ -1,0 +1,53 @@
+Sure, I've modified the script to include tags as well:
+
+```python
+import requests
+import csv
+import json
+
+def create_engagement(api_url, token, name, target_start, target_end, lead, product, status, tags):
+    headers = {
+        'Authorization': f'Token {token}',
+        'Content-Type': 'application/json'
+    }
+    data = {
+        "name": name,
+        "target_start": target_start,
+        "target_end": target_end,
+        "lead": lead,
+        "product": product,
+        "status": status,
+        "tags": tags
+    }
+    response = requests.post(api_url + '/engagements/', json=data, headers=headers)
+    if response.status_code == 201:
+        print(f"Engagement '{name}' created successfully.")
+    else:
+        print(f"Failed to create engagement '{name}'. Status code: {response.status_code}")
+
+def main():
+    api_url = "https://hdhdjjd.djjd.com/api/v2"
+    token = "jdjdjdjdjjdjd"
+    csv_file = "createengagements.csv"
+
+    with open(csv_file, newline='') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            tags = row['Tags'].split(',') if 'Tags' in row else []
+            create_engagement(
+                api_url,
+                token,
+                row['Name'],
+                row['Target_start'],
+                row['Target_end'],
+                int(row['Lead']),
+                int(row['Product']),
+                row['Status'],
+                tags
+            )
+
+if __name__ == "__main__":
+    main()
+```
+
+Make sure to include a column named `Tags` in your CSV file, where you can specify the tags for each engagement separated by commas.
