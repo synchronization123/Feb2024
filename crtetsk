@@ -1,0 +1,55 @@
+Certainly! Let's modify the code to print the engagement ID instead of the message "No URL returned in the response".
+
+```python
+import requests
+import pandas as pd
+
+def create_engagement(api_key, engagement_data):
+    url = "https://demo.defectdojo.org/api/v2/engagements/"
+    headers = {
+        "Authorization": f"Token {api_key}",
+        "Content-Type": "application/json"
+    }
+    response = requests.post(url, headers=headers, json=engagement_data)
+    if response.status_code == 201:
+        print("Engagement created successfully.")
+        try:
+            engagement_id = response.json()["id"]
+            print("Engagement ID:", engagement_id)
+        except KeyError:
+            print("No ID returned in the response.")
+    else:
+        print("Failed to create engagement.")
+        print("Status Code:", response.status_code)
+        print("Response:", response.text)
+
+def read_excel_file(file_path):
+    df = pd.read_excel(file_path)
+    # Convert Timestamp objects to string
+    df['target_start'] = df['target_start'].astype(str)
+    df['target_end'] = df['target_end'].astype(str)
+    
+    # Convert tags to valid JSON array
+    df['tags'] = df['tags'].apply(lambda x: x.split(','))
+
+    return df.to_dict(orient="records")
+
+def main():
+    # Your DefectDojo API key
+    api_key = "548afd6fab3bea9794a41b31da0e9404f733e222"
+
+    # Path to your Excel file
+    excel_file_path = "engagement_data.xlsx"
+
+    # Read data from Excel file
+    engagements_data = read_excel_file(excel_file_path)
+
+    # Create engagements
+    for data in engagements_data:
+        create_engagement(api_key, data)
+
+if __name__ == "__main__":
+    main()
+```
+
+With this modification, if the engagement is created successfully, it will print the engagement ID instead of the message "No URL returned in the response". This should give you the necessary ID information for further reference.
