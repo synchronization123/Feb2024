@@ -1,0 +1,94 @@
+<?php
+function fetchUsernames($api_key) {
+    $url = "https://demo.defectdojo.org/api/v2/users/?limit=800000";
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+        'Authorization: Token ' . $api_key
+    ));
+    $response = curl_exec($ch);
+    curl_close($ch);
+    $data = json_decode($response, true);
+    $usernames = array();
+    foreach ($data['results'] as $user) {
+        $usernames[] = $user['username'];
+    }
+    return $usernames;
+}
+
+function fetchDataByUser($api_key, $username, $start_date, $end_date) {
+    $jql_query = "status changed from 'Ready for testing' to 'Done' during(\"$start_date\", \"$end_date\") by $username";
+    $jira_url = "https://jira.demo.abcd.com/rest/api/2/search?jql=" . urlencode($jql_query);
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $jira_url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+        'Content-Type: application/json',
+        'Authorization: Bearer ' . $api_key
+    ));
+    return $ch;
+}
+
+if(isset($_POST['submit'])) {
+    $api_key = "YOUR_API_KEY"; // Replace with your actual API key
+    $start_date = $_POST['start_date'];
+    $end_date = $_POST['end_date'];
+    
+    // Fetch all usernames
+    $usernames = fetchUsernames($api_key);
+    
+    // Initialize multi curl
+    $multiHandle = curl_multi_init();
+    $curlHandles = array();
+    
+    // Create curl handles for each user
+    foreach ($usernames as $username) {
+        $curlHandles[$username] = fetchDataByUser($api_key, $username, $start_date, $end_date);
+        curl_multi_add_handle($multiHandle, $curlHandles[$username]);
+    }
+    
+    // Execute all curl handles simultaneously
+    do {
+        $status = curl_multi_exec($multiHandle, $active);
+        if ($active) {
+            curl_multi_select($multiHandle);
+        }
+    } while ($active && $status == CURLM_OK);
+    
+    // Close all curl handles
+    foreach ($curlHandles as $handle) {
+        curl_multi_remove_handle($multiHandle, $handle);
+    }
+    curl_multi_close($multiHandle);
+    
+    // Retrieve and process results
+    foreach ($curlHandles as $username => $handle) {
+        $response = curl_multi_getcontent($handle);
+        $data = json_decode($response, true);
+        // Process data as needed
+        if(isset($data['issues'])) {
+            echo "<h4 class='mt-4'>Results for User: $username</h4>";
+            echo "<div class='row mt-3'>";
+            echo "<div class='col'>";
+            echo "<table class='table'>";
+            echo "<thead><tr><th>Issue Key</th><th>Status</th><th>Summary</th><th>Project</th><th>Custom Field</th></tr></thead>";
+            echo "<tbody>";
+            foreach ($data['issues'] as $issue) {
+                $issueKey = $issue['key'];
+                $status = $issue['fields']['status']['name'];
+                $summary = $issue['fields']['summary'];
+                $project = $issue['fields']['project']['name'];
+                $customField = $issue['fields']['customfield_12601']; // Assuming custom field ID is 12601
+                echo "<tr><td>$issueKey</td><td>$status</td><td>$summary</td><td>$project</td><td>$customField</td></tr>";
+            }
+            echo "</tbody>";
+            echo "</table>";
+            echo "</div>";
+            echo "</div>";
+        } else {
+            echo "<div class='alert alert-info mt-3'>No issues found for User: $username</div>";
+        }
+    }
+}
+?>
