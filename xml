@@ -1,0 +1,39 @@
+The error you're encountering suggests that the XML file is empty or doesn't contain valid XML content. To handle this error gracefully, you can add a check to ensure the XML file is not empty before attempting to parse it. Here's the updated script:
+
+```python
+import xml.etree.ElementTree as ET
+
+def convert_xml_to_html(xml_file, html_file):
+    try:
+        with open(xml_file, 'r') as f:
+            xml_content = f.read()
+            if not xml_content.strip():
+                print("Error: XML file is empty.")
+                return
+            tree = ET.ElementTree(ET.fromstring(xml_content))
+            root = tree.getroot()
+            html_output = "<html>\n<head>\n<title>XML to HTML</title>\n</head>\n<body>\n"
+            html_output += convert_element(root)
+            html_output += "</body>\n</html>"
+            with open(html_file, "w") as f:
+                f.write(html_output)
+            print("Conversion successful!")
+    except ET.ParseError as e:
+        print(f"Error parsing XML: {e}")
+
+def convert_element(element):
+    html = "<" + element.tag + ">"
+    if element.text:
+        html += element.text
+    for child in element:
+        html += convert_element(child)
+    html += "</" + element.tag + ">"
+    return html
+
+# Example usage
+xml_file = "myxml.xml"
+html_file = "myhtml.html"
+convert_xml_to_html(xml_file, html_file)
+```
+
+This script will now check if the XML file is empty before attempting to parse it, and it will print an error message if the file is empty. If the file contains valid XML content, it will proceed with the conversion as before. Make sure to replace `"myxml.xml"` and `"myhtml.html"` with the actual paths to your XML and HTML files, respectively.
