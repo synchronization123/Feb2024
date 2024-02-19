@@ -1,0 +1,34 @@
+Sure, here's how you can modify the script to read from an XML file and write the converted HTML to an HTML file:
+
+```python
+import xml.etree.ElementTree as ET
+
+def convert_xml_to_html(xml_file, html_file):
+    try:
+        tree = ET.parse(xml_file)
+        root = tree.getroot()
+        html_output = "<html>\n<head>\n<title>XML to HTML</title>\n</head>\n<body>\n"
+        html_output += convert_element(root)
+        html_output += "</body>\n</html>"
+        with open(html_file, "w") as f:
+            f.write(html_output)
+        print("Conversion successful!")
+    except ET.ParseError as e:
+        print(f"Error parsing XML: {e}")
+
+def convert_element(element):
+    html = "<" + element.tag + ">"
+    if element.text:
+        html += element.text
+    for child in element:
+        html += convert_element(child)
+    html += "</" + element.tag + ">"
+    return html
+
+# Example usage
+xml_file = "myxml.xml"
+html_file = "myhtml.html"
+convert_xml_to_html(xml_file, html_file)
+```
+
+Replace `"myxml.xml"` with the path to your XML file and `"myhtml.html"` with the desired path for your HTML file. This script will read the XML file, convert it to HTML, and save the result to the specified HTML file.
